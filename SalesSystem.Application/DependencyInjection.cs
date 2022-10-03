@@ -13,6 +13,9 @@ public static class DependencyInjection
         services.AddScoped<IFireBaseService, FireBaseService>();
         services.AddScoped<IUtilitiesService, UtilitiesService>();
         services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IBusinessService, BusinessService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         return services;
     }
 }

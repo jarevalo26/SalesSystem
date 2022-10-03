@@ -1,4 +1,4 @@
-﻿namespace SalesSystem.Web.Models.Responses
+﻿namespace SalesSystem.Web.Utilities.Responses
 {
     public class GenericResponse<TObject>
     {

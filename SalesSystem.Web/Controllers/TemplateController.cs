@@ -6,8 +6,8 @@ namespace SalesSystem.Web.Controllers
     {
         public IActionResult SendPassword(string email, string password)
         {
-            ViewData["Email"] = email;
-            ViewData["Password"] = password;
+            ViewData["Correo"] = email;
+            ViewData["Clave"] = password;
             ViewData["Url"] = $"{this.Request.Scheme}://{this.Request.Host}";
             return View();
         }

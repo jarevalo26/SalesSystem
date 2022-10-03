@@ -34,6 +34,7 @@ namespace SalesSystem.Application.Implementation
                 {
                     Host = config["host"],
                     Port = int.Parse(config["puerto"]),
+                    Credentials = credentials,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = false,
                     EnableSsl = true
