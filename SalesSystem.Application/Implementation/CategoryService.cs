@@ -42,7 +42,7 @@ namespace SalesSystem.Application.Implementation
                 Categoria category = await _repository.Get(c => c.IdCategoria == entity.IdCategoria);
                 category.Descripcion = entity.Descripcion;
                 category.EsActivo = entity.EsActivo;
-                bool response = await _repository.Update(entity);
+                bool response = await _repository.Update(category);
                 if (!response)
                     throw new TaskCanceledException("No se pudo modificar la categoria");
 

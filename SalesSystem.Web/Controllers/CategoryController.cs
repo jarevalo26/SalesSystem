@@ -50,7 +50,7 @@ namespace SalesSystem.Web.Controllers
             return StatusCode(StatusCodes.Status200OK, gResponse);
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> Edit([FromBody] CategoriaViewModel model)
         {
             GenericResponse<CategoriaViewModel> gResponse = new();
@@ -70,7 +70,7 @@ namespace SalesSystem.Web.Controllers
             return StatusCode(StatusCodes.Status200OK, gResponse);
         }
 
-        [HttpPost]
+        [HttpDelete]
         public async Task<IActionResult> Delete(int categoryId)
         {
             GenericResponse<string> gResponse = new();

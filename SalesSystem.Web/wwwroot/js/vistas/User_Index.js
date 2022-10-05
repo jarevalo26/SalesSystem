@@ -26,7 +26,6 @@ $(document).ready(function () {
         }
     })
 
-    debugger;
     tablaData = $('#tbdata').DataTable({
         responsive: true,
          "ajax": {
@@ -80,7 +79,6 @@ $(document).ready(function () {
     });
 });
 
-
 function mostrarModal(modelo = MODELO_BASE) {
     $("#txtId").val(modelo.idUsuario);
     $("#txtNombre").val(modelo.nombre);
@@ -120,8 +118,6 @@ $("#btnGuardar").click(function () {
     const formData = new FormData();
     formData.append("photo", inputFoto.files[0]);
     formData.append("model", JSON.stringify(modelo));
-
-    debugger;
 
     $("#modalData").find("div.modal-content").LoadingOverlay("show");
 
@@ -165,6 +161,7 @@ $("#btnGuardar").click(function () {
     }
 })
 
+let filaSeleccionada;
 $("#tbdata tbody").on("click", ".btn-editar", function () {
     if ($(this).closest("tr").hasClass("child")) {
         filaSeleccionada = $(this).closest("tr").prev();
@@ -177,7 +174,6 @@ $("#tbdata tbody").on("click", ".btn-editar", function () {
 })
 
 $("#tbdata tbody").on("click", ".btn-eliminar", function () {
-    debugger;
     let fila;
     if ($(this).closest("tr").hasClass("child")) {
         filaSeleccionada = $(this).closest("tr").prev();
