@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SalesSystem.Application.Interfaces;
 using SalesSystem.Domain.Entities;
 using SalesSystem.Infrastructure.Contexts;
-using SalesSystem.Infrastructure.Interfaces;
 
 namespace SalesSystem.Infrastructure.Implementations
 {
@@ -59,8 +59,8 @@ namespace SalesSystem.Infrastructure.Implementations
                 .ThenInclude(u => u!.IdUsuarioNavigation)
                 .Include(v => v.IdVentaNavigation)
                 .ThenInclude(t => t!.IdTipoDocumentoVentaNavigation)
-                .Where(dv => 
-                    dv.IdVentaNavigation!.FechaRegistro!.Value.Date >= initialDate && 
+                .Where(dv =>
+                    dv.IdVentaNavigation!.FechaRegistro!.Value.Date >= initialDate &&
                     dv.IdVentaNavigation.FechaRegistro.Value.Date <= finalDate)
                 .ToListAsync();
 

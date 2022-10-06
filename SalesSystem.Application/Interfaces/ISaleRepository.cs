@@ -1,7 +1,6 @@
-﻿using SalesSystem.Application.Interfaces;
-using SalesSystem.Domain.Entities;
+﻿using SalesSystem.Domain.Entities;
 
-namespace SalesSystem.Infrastructure.Interfaces
+namespace SalesSystem.Application.Interfaces
 {
     public interface ISaleRepository : IGenericRepository<Venta>
     {

@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SalesSystem.Application.Interfaces;
 using SalesSystem.Infrastructure.Contexts;
 using SalesSystem.Infrastructure.Implementations;
-using SalesSystem.Infrastructure.Interfaces;
 
 namespace SalesSystem.Infraestructure;
 
