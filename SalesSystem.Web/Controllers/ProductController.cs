@@ -1,5 +1,4 @@
-﻿using AspNetCore;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SalesSystem.Application.Interfaces;
@@ -38,7 +37,7 @@ namespace SalesSystem.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] IFormFile image, [FromForm] string model)
         {
-            GenericResponse<ProductoViewModel> gResponse = new GenericResponse<ProductoViewModel>();
+            GenericResponse<ProductoViewModel> gResponse = new();
             try
             {
                 ProductoViewModel? vmProduct = JsonConvert.DeserializeObject<ProductoViewModel>(model);
@@ -69,17 +68,21 @@ namespace SalesSystem.Web.Controllers
         [HttpPut]
         public async Task<IActionResult> Edit([FromForm] IFormFile image, [FromForm] string model)
         {
-            GenericResponse<ProductoViewModel> gResponse = new GenericResponse<ProductoViewModel>();
+            GenericResponse<ProductoViewModel> gResponse = new();
             try
             {
                 ProductoViewModel? vmProduct = JsonConvert.DeserializeObject<ProductoViewModel>(model);
                 Stream? imageStream = null;
+                string? imageName = "";
                 if (image != null)
                 {
+                    string nameInCode = Guid.NewGuid().ToString("N");
+                    string extension = Path.GetExtension(image.FileName);
+                    imageName = string.Concat(nameInCode, extension);
                     imageStream = image.OpenReadStream();
                 }
 
-                Producto productEdited = await _product.Edit(_mapper.Map<Producto>(vmProduct), imageStream);
+                Producto productEdited = await _product.Edit(_mapper.Map<Producto>(vmProduct), imageStream, imageName);
                 vmProduct = _mapper.Map<ProductoViewModel>(productEdited);
                 gResponse.State = true;
                 gResponse.Object = vmProduct;
@@ -96,7 +99,7 @@ namespace SalesSystem.Web.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(int productId)
         {
-            GenericResponse<string> gResponse = new GenericResponse<string>();
+            GenericResponse<string> gResponse = new();
             try
             {
                 gResponse.State = await _product.Delete(productId);
@@ -109,4 +112,6 @@ namespace SalesSystem.Web.Controllers
 
             return StatusCode(StatusCodes.Status200OK, gResponse);
         }
+
+    }
 }

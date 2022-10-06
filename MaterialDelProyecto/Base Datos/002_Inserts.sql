@@ -131,3 +131,8 @@ INSERT INTO RolMenu(idRol,idMenu,esActivo) values
 (3,9,1),
 (3,10,1),
 (3,11,1)
+
+
+--________________________________ INSERTAR ROL PRODUCTO ________________________________
+INSERT INTO Producto (CodigoBarra, Marca, Descripcion, IdCategoria, Stock, Precio, EsActivo)
+VALUES ('101010', 'Halion', 'Computradora PC Core 15', 1, 15, 1699, 1);

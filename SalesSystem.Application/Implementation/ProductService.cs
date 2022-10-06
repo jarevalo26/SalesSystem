@@ -58,7 +58,7 @@ namespace SalesSystem.Application.Implementation
             }
         }
 
-        public async Task<Producto> Edit(Producto entity, Stream? image = null)
+        public async Task<Producto> Edit(Producto entity, Stream? image = null, string imageName = "")
         {
             Producto product = await _repository.Get(p => p.CodigoBarra == entity.CodigoBarra && p.IdProducto != entity.IdProducto);
             if (product !=  null)
@@ -74,6 +74,11 @@ namespace SalesSystem.Application.Implementation
                 productEdited.Stock = entity.Stock;
                 productEdited.Precio = entity.Precio;
                 productEdited.EsActivo = entity.EsActivo;
+
+                if (productEdited.NombreImagen == "")
+                {
+                    productEdited.NombreImagen = imageName;
+                }
 
                 if (image != null)
                 {

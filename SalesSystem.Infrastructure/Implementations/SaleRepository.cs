@@ -56,9 +56,9 @@ namespace SalesSystem.Infrastructure.Implementations
         {
             List<DetalleVenta> list = await _dbContext.DetalleVenta
                 .Include(v => v.IdVentaNavigation)
-                .ThenInclude(u => u.IdUsuarioNavigation)
+                .ThenInclude(u => u!.IdUsuarioNavigation)
                 .Include(v => v.IdVentaNavigation)
-                .ThenInclude(t => t.IdTipoDocumentoVentaNavigation)
+                .ThenInclude(t => t!.IdTipoDocumentoVentaNavigation)
                 .Where(dv => 
                     dv.IdVentaNavigation!.FechaRegistro!.Value.Date >= initialDate && 
                     dv.IdVentaNavigation.FechaRegistro.Value.Date <= finalDate)
