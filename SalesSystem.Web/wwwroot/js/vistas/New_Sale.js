@@ -1,216 +1,226 @@
-﻿const MODELO_BASE = {
-    idUsuario: 0,
-    nombre: "",
-    correo: "",
-    telefono: "",
-    idRol: 0,
-    esActivo: 1,
-    urlFoto: ""
-}
-
-let tablaData;
+﻿let valorImpuesto = 0;
 
 $(document).ready(function () {
 
-    fetch("/User/Roles")
+    fetch("/Sale/SalesDocumentTypeList")
     .then(response => {
         return response.ok ? response.json() : Promise.reject(response)
     })
     .then(responseJson => {
         if (responseJson.length > 0) {
             responseJson.forEach((item) => {
-                $("#cboRol").append(
-                    $("<option>").val(item.idRol).text(item.descripcion)
+                $("#cboTipoDocumentoVenta").append(
+                    $("<option>").val(item.idTipoDocumentoVenta).text(item.descripcion)
                 )
             });
         }
     })
 
-    tablaData = $('#tbdata').DataTable({
-        responsive: true,
-         "ajax": {
-             "url": '/user/Usuarios',
-             "type": "GET",
-             "datatype": "json"
-         },
-        "columns": [
-            { "data": "idUsuario", "visible": false, "searchable": false },
-            {
-                "data": "urlFoto", render: function (data) {
-                    return `<img style="height:60px" src=${data} class="rounded mx-auto d-block"/>`
-                }
+    fetch("/Business/Get")
+    .then(response => {
+        return response.ok ? response.json() : Promise.reject(response)
+    })
+    .then(responseJson => {
+        if (responseJson.state) {
+            const d = responseJson.object;
+            console.log(d);
+            $("#inputGroupSubTotal").text(`Sub total - ${d.simboloMoneda}`);
+            $("#inputGroupIGV").text(`IVG(${d.porcentajeImpuesto}%) - ${d.simboloMoneda}`);
+            $("#inputGroupTotal").text(`Total - ${d.simboloMoneda}`);
+
+            valorImpuesto = parseFloat(d.porcentajeImpuesto);
+        }
+    })
+
+    $("#cboBuscarProducto").select2({
+        ajax: {
+            url: "/Sale/GetProducts",
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            delay: 250,
+            data: function (params) {
+                return {
+                    search: params.term
+                };
             },
-            { "data": "nombre" },
-            { "data": "correo" },
-            { "data": "telefono" },
-            { "data": "nombreRol" },
-            {
-                "data": "esActivo", render: function (data) {
-                    if (data == 1)
-                        return '<span class="badge badge-info">Activo</span>';
-                    else 
-                        return '<span class="badge badge-danger">No Activo</span>';
-                }
+            processResults: function (data) {
+                return {
+                    results: data.map((item) => ({
+                        id: item.idProducto,
+                        text: item.descripcion,
+                        marca: item.marca,
+                        categoria: item.nombreCategoria,
+                        urlImagen: item.urlImagen,
+                        precio: parseFloat(item.precio)
+                    }))
+                };
             },
-            {
-                "defaultContent": '<button class="btn btn-primary btn-editar btn-sm mr-2"><i class="fas fa-pencil-alt" ></i></button > ' +
-                    '<button class="btn btn-danger btn-eliminar btn-sm"><i class="fas fa-trash-alt"></i></button>',
-                "orderable": false,
-                "searchable": false,
-                "width": "80px"
-            }
-        ],
-        order: [[0, "desc"]],
-        dom: "Bfrtip",
-        buttons: [
-            {
-                text: 'Exportar Excel',
-                extend: 'excelHtml5',
-                title: '',
-                filename: 'Reporte Usuarios',
-                exportOptions: {
-                    columns: [2,3,4,5,6]
-                }
-            }, 'pageLength'
-        ],
-        language: {
-            url: "https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
         },
+        language: "es",
+        placeholder: 'Buscar Producto...',
+        minimumInputLength: 1,
+        templateResult: formatoResultados
     });
 });
 
-function mostrarModal(modelo = MODELO_BASE) {
-    $("#txtId").val(modelo.idUsuario);
-    $("#txtNombre").val(modelo.nombre);
-    $("#txtCorreo").val(modelo.correo);
-    $("#txtTelefono").val(modelo.telefono);
-    $("#cboRol").val(modelo.idRol == 0 ? $("#cboRol opion:first").val() : modelo.idRol);
-    $("#cboEstado").val(modelo.esActivo);
-    $("#txtFoto").val("");
-    $("#imgUsuario").attr("src", modelo.urlFoto);
+function formatoResultados(data) {
+    if (data.loading)
+        return data.text;
 
-    $("#modalData").modal("show");
+    var contenedor = $(
+    `<table width="100%">
+        <tr>
+            <td style="width:60px">
+                <img style="height:60px;width:60px;margin-right:10px" src="${data.urlImagen}" />
+            </td>
+            <td>
+                <p style="font-weight:bolder;margin:2px">${data.marca}</p>
+                <p style="margin:2px">${data.text}</p>
+            </td>
+        </tr>
+    </table>`
+    );
+
+    return contenedor;
 }
 
-$("#btnNuevo").click(function () {
-    mostrarModal();
+$(document).on("select2:open", function () {
+    document.querySelector(".select2-search__field").focus();
 })
 
-$("#btnGuardar").click(function () {
-    const inputs = $("input.input-validar").serializeArray();
-    const inputsNull = inputs.filter((item) => item.value.trim() == "")
-    if (inputsNull.length > 0) {
-        const mensaje = `Debe completar el campo : "${inputsNull[0].name}"`;
-        toastr.warning("", mensaje);
-        $(`input[name="${inputsNull[0].name}"]`).focus();
-        return;
+let productosParaVenta = [];
+
+$("#cboBuscarProducto").on("select2:select", function (e) {
+    const data = e.params.data;
+    let productoEncontrado = productosParaVenta.filter(p => p.idProducto == data.id);
+    if (productoEncontrado.length > 0) {
+        $("#cboBuscarProducto").val("").trigger("change");
+        toastr.warning("", "El producto ya fue agregado.");
+        return false;
     }
 
-    const modelo = structuredClone(MODELO_BASE);
-    modelo["idUsuario"] = parseInt($("#txtId").val())
-    modelo["nombre"] = $("#txtNombre").val()
-    modelo["correo"] = $("#txtCorreo").val()
-    modelo["telefono"] = $("#txtTelefono").val()
-    modelo["idRol"] = $("#cboRol").val()
-    modelo["esActivo"] = $("#cboEstado").val()
+    console.log(data)
 
-    const inputFoto = document.getElementById("txtFoto")
-    const formData = new FormData();
-    formData.append("photo", inputFoto.files[0]);
-    formData.append("model", JSON.stringify(modelo));
-
-    $("#modalData").find("div.modal-content").LoadingOverlay("show");
-
-    if (modelo.idUsuario == 0) {
-        fetch("/User/Create", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => {
-            $("#modalData").find("div.modal-content").LoadingOverlay("hide");
-            return response.ok ? response.json() : Promise.reject(response);
-        })
-        .then(responseJson => {
-            if (responseJson.state) {
-                tablaData.row.add(responseJson.object).draw(false)
-                $("#modalData").modal("hide")
-                swal("Listo!", "El usuario fue creado", "success")
-            } else {
-                swal("Lo sentimos!", responseJson.message, "error")
-            }
-        })
-    } else {
-        fetch("/User/Edit", {
-            method: "PUT",
-            body: formData
-        })
-        .then(response => {
-            $("#modalData").find("div.modal-content").LoadingOverlay("hide");
-            return response.ok ? response.json() : Promise.reject(response);
-        })
-        .then(responseJson => {
-            if (responseJson.state) {
-                tablaData.row(filaSeleccionada).data(responseJson.object).draw(false);
-                filaSeleccionada = null;
-                $("#modalData").modal("hide")
-                swal("Listo!", "El usuario fue modificado", "success")
-            } else {
-                swal("Lo sentimos!", responseJson.message, "error")
-            }
-        })
-    }
-})
-
-let filaSeleccionada;
-$("#tbdata tbody").on("click", ".btn-editar", function () {
-    if ($(this).closest("tr").hasClass("child")) {
-        filaSeleccionada = $(this).closest("tr").prev();
-    } else {
-        filaSeleccionada = $(this).closest("tr");
-    }
-
-    const data = tablaData.row(filaSeleccionada).data();
-    mostrarModal(data);
-})
-
-$("#tbdata tbody").on("click", ".btn-eliminar", function () {
-    let fila;
-    if ($(this).closest("tr").hasClass("child")) {
-        filaSeleccionada = $(this).closest("tr").prev();
-    } else {
-        filaSeleccionada = $(this).closest("tr");
-    }
-
-    const data = tablaData.row(fila).data();
     swal({
-        title: "¿Está seguro?",
-        text: `Eliminar el usuario "${data.nombre}"`,
-        type: "warning",
+        title: data.marca,
+        text: data.text,
+        imageUrl: data.urlImagen,
+        type: "input",
         showCancelButton: true,
-        confirmButtonClass: "btn-danger",
-        confirmButtonText: "Si, eliminar",
-        cancelButtonText: "No, cancelar",
         closeOnConfirm: false,
-        closeOnCancel: true
-    }, function (respuesta) {
-        if (respuesta) {
-            $(".showSweetAlert").LoadingOverlay("show");
+        inputPlaceholder: "Ingrese cantidad"
+    }, function (valor) {
+        debugger;
+        if (valor === false) return false;
 
-            fetch(`/User/Delete?userId=${data.idUsuario}`, {
-                method: "DELETE"
-            })
-            .then(response => {
-                $(".showSweetAlert").LoadingOverlay("hide");
-                return response.ok ? response.json() : Promise.reject(response);
-            })
-            .then(responseJson => {
-                if (responseJson.state) {
-                    tablaData.row(fila).remove().draw();
-                    swal("Listo!", "El usuario fue eliminado", "success")
-                } else {
-                    swal("Lo sentimos!", responseJson.message, "error")
-                }
-            })
+        if (valor === null) {
+            toastr.warning("", "Necesita ingresar la cantidad.");
+            return false;
+        }
+
+        if (isNaN(parseInt(valor))) {
+            toastr.warning("", "Debe ingresar un valor númerico.");
+            return false;
+        }
+
+        let producto = {
+            idProducto: data.id,
+            marcaProducto: data.marca,
+            descripcionProducto: data.text,
+            categoriaProducto: data.categoria,
+            cantidad: parseInt(valor),
+            precio: data.precio.toString(),
+            total: (parseFloat(valor) * data.precio).toString()
+        }
+
+        productosParaVenta.push(producto);
+        mostrarProducto_Precios();
+        $("#cboBuscarProducto").val("").trigger("change")
+        swal.close();
+    });
+
+})
+
+function mostrarProducto_Precios() {
+    debugger;
+    let total = 0;
+    let igv = 0;
+    let subtotal = 0;
+    let porcentaje = valorImpuesto / 100;
+
+    $("#tbProducto tbody").html("")
+    productosParaVenta.forEach((item) => {
+        total = total + parseFloat(item.total)
+        $("#tbProducto tbody").append(
+            $("<tr>").append(
+                $("<td>").append(
+                    $("<button>").addClass("btn btn-danger btn-eliminar btn-sm").append(
+                        $("<i>").addClass("fas fa-trash-alt")
+                    ).data("idProducto", item.idProducto)
+                ),
+                $("<td>").text(item.descripcionProducto),
+                $("<td>").text(item.cantidad),
+                $("<td>").text(item.precio),
+                $("<td>").text(item.total)
+            )
+        )
+    })
+
+    subtotal = total / (1 + porcentaje);
+    igv = total - subtotal;
+
+    $("#txtSubTotal").val(subtotal.toFixed(2))
+    $("#txtIGV").val(igv.toFixed(2))
+    $("#txtTotal").val(total.toFixed(2))
+}
+
+$(document).on("click", "button.btn-eliminar", function () {
+    const _idProducto = $(this).data("idProducto")
+    productosParaVenta = productosParaVenta.filter(p => p.idProducto != _idProducto);
+    mostrarProducto_Precios();
+})
+
+$("#btnTerminarVenta").click(function () {
+    debugger
+    if (productosParaVenta.length < 1) {
+        toastr.warning("", "Debe ingresar productos")
+        return
+    }
+
+    const vmDetalleVenta = productosParaVenta;
+    const venta = {
+        idTipoDocumentoVenta: $("#cboTipoDocumentoVenta").val(),
+        documentoCliente: $("#txtDocumentoCliente").val(),
+        nombreCliente: $("#txtNombreCliente").val(),
+        subTotal: $("#txtSubTotal").val(),
+        impuestoTotal: $("#txtIGV").val(),
+        total: $("#txtTotal").val(),
+        DetalleVenta: vmDetalleVenta
+    }
+
+    $("#btnTerminarVenta").LoadingOverlay("show");
+
+    fetch("/Sale/SalesRegister", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(venta)
+    })
+    .then(response => {
+        $("#btnTerminarVenta").LoadingOverlay("hide");
+        return response.ok ? response.json() : Promise.reject(response)
+    })
+    .then(responseJson => {
+        if (responseJson.state) {
+            productosParaVenta = []
+            mostrarProducto_Precios();
+
+            $("#txtDocumentoCliente").val("");
+            $("#txtNombreCliente").val("");
+            $("#cboTipoDocumentoVenta").val($("#cboTipoDocumentoVenta option:first").val());
+
+            swal("Registrado!", `Numero Venta: ${responseJson.object.numeroVenta}`, "success")
+        } else {
+            swal("Lo sentimos!", "No se pudo registrar la venta", "error")
         }
     })
 })
