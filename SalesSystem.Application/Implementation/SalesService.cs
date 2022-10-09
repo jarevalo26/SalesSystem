@@ -50,7 +50,8 @@ namespace SalesSystem.Application.Implementation
             {
                 DateTime iDate = DateTime.ParseExact(initialDate!, "dd/MM/yyyy", new CultureInfo("es-CO"));
                 DateTime fDate = DateTime.ParseExact(finalDate!, "dd/MM/yyyy", new CultureInfo("es-CO"));
-                _ = query.Where(v =>
+                _ = query
+                    .Where(v =>
                         v.FechaRegistro!.Value.Date >= iDate &&
                         v.FechaRegistro.Value.Date <= fDate)
                     .Include(tdv => tdv.IdTipoDocumentoVentaNavigation)

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
-using MessagePack.Resolvers;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using SalesSystem.Application.Interfaces;
 using SalesSystem.Domain.Entities;
@@ -13,15 +14,18 @@ namespace SalesSystem.Web.Controllers
         private readonly ISalesDocumentTypeService _salesDocumentTypeService;
         private readonly ISalesService _salesService;
         private readonly IMapper _mapper;
+        private readonly IConverter _converter;
 
         public SaleController(
             ISalesDocumentTypeService salesDocumentTypeService,
             ISalesService salesService,
-            IMapper mapper)
+            IMapper mapper,
+            IConverter converter)
         {
             _salesDocumentTypeService = salesDocumentTypeService;
             _salesService = salesService;
             _mapper = mapper;
+            _converter = converter;
         }
 
         public IActionResult NewSale()
@@ -49,7 +53,7 @@ namespace SalesSystem.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SalesRegister([FromBody]VentaViewModel model)
+        public async Task<IActionResult> SalesRegister([FromBody] VentaViewModel model)
         {
             GenericResponse<VentaViewModel> gResponse = new();
             try
@@ -73,6 +77,31 @@ namespace SalesSystem.Web.Controllers
         {
             List<VentaViewModel> vmSalesHistory = _mapper.Map<List<VentaViewModel>>(await _salesService.SalesHistory(salesNumber, initialDate, finalDate));
             return StatusCode(StatusCodes.Status200OK, vmSalesHistory);
+        }
+
+        [HttpGet]
+        public IActionResult ShowPdf(string saleNumber)
+        {
+            string urlPlantilla = $"{this.Request.Scheme}//{this.Request.Host}/Template/SalesPDF?saleNumber={saleNumber}";
+            var pdf = new HtmlToPdfDocument()
+            {
+                GlobalSettings = new GlobalSettings()
+                {
+                    PaperSize = PaperKind.A4,
+                    Orientation = Orientation.Portrait,
+                },
+                Objects =
+                {
+                    new ObjectSettings()
+                    {
+                        Page = urlPlantilla
+                    }
+                }
+            };
+
+            var pdfFile = _converter.Convert(pdf);
+
+            return File(pdfFile, "application/pdf");
         }
     }
 }
